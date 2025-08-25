@@ -1,0 +1,148 @@
+/* Custom styles for School Bus Tracker */
+
+.route-progress {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.station-item {
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.station-item:hover {
+    border-color: var(--bs-border-color);
+    transform: translateX(5px);
+}
+
+.station-icon {
+    width: 40px;
+    text-align: center;
+}
+
+.table th {
+    font-weight: 600;
+    border-bottom: 2px solid var(--bs-border-color);
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid var(--bs-border-color);
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.btn {
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.modal-content {
+    border: none;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+}
+
+.form-control, .form-select {
+    border-radius: 0.375rem;
+    border: 1px solid var(--bs-border-color);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.badge {
+    font-weight: 500;
+}
+
+/* Loading animation */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--bs-primary);
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .station-item {
+        padding: 0.75rem !important;
+    }
+    
+    .station-icon {
+        width: 30px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Status indicators */
+.status-passed {
+    background-color: rgba(var(--bs-success-rgb), 0.1);
+    border-left: 4px solid var(--bs-success);
+}
+
+.status-approaching {
+    background-color: rgba(var(--bs-warning-rgb), 0.1);
+    border-left: 4px solid var(--bs-warning);
+}
+
+.status-upcoming {
+    background-color: rgba(var(--bs-secondary-rgb), 0.1);
+    border-left: 4px solid var(--bs-secondary);
+}
+
+/* Animation for approaching bus */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.status-approaching .station-icon i {
+    animation: pulse 2s infinite;
+}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Settings - Bus Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-cog me-2"></i>Admin Settings</h2>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-key me-2"></i>Change Password
+                </h5>
+                
+                <form method="POST" action="{{ url_for('change_admin_password') }}">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" name="current_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" name="new_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" name="confirm_password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>System Information
+                </h5>
+                
+                <div class="mb-3">
+                    <strong>Admin User:</strong> {{ session.admin_username }}
+                </div>
+                
+                <div class="mb-3">
+                    <strong>System Features:</strong>
+                    <ul class="mt-2">
+                        <li>Real-time GPS tracking</li>
+                        <li>Student management</li>
+                        <li>Bus fleet management</li>
+                        <li>Route and station management</li>
+                        <li>ETA calculations</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>GPS Update Endpoint:</strong><br>
+                    <code>POST /bus/{bus_id}/location</code><br>
+                    <small>Use this endpoint to send GPS coordinates from Arduino or other devices</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-book me-2"></i>Quick Navigation
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('manage_buses') }}" class="btn btn-outline-success w-100 mb-2">
+                            <i class="fas fa-bus me-2"></i>Manage Buses
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('manage_stations') }}" class="btn btn-outline-info w-100 mb-2">
+                            <i class="fas fa-map-marker-alt me-2"></i>Manage Stations
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('manage_students') }}" class="btn btn-outline-warning w-100 mb-2">
+                            <i class="fas fa-user-graduate me-2"></i>Manage Students
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

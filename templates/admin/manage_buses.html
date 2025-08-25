@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Buses - Bus Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-bus me-2"></i>Manage Buses</h2>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBusModal">
+        <i class="fas fa-plus me-2"></i>Add Bus
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if buses %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Bus Number</th>
+                            <th>Driver Name</th>
+                            <th>Driver Phone</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bus in buses %}
+                            <tr>
+                                <td>{{ bus.bus_number }}</td>
+                                <td>{{ bus.driver_name }}</td>
+                                <td>{{ bus.driver_phone }}</td>
+                                <td>{{ bus.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="editBus({{ bus.bus_id }}, '{{ bus.bus_number }}', '{{ bus.driver_name }}', '{{ bus.driver_phone }}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form method="POST" action="{{ url_for('delete_bus', bus_id=bus.bus_id) }}" 
+                                          class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-bus fa-3x text-muted mb-3"></i>
+                <h5>No buses found</h5>
+                <p class="text-muted">Add your first bus to get started</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Bus Modal -->
+<div class="modal fade" id="addBusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Bus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_bus') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="bus_number" class="form-label">Bus Number</label>
+                        <input type="text" class="form-control" name="bus_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="driver_name" class="form-label">Driver Name</label>
+                        <input type="text" class="form-control" name="driver_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="driver_phone" class="form-label">Driver Phone</label>
+                        <input type="tel" class="form-control" name="driver_phone" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Bus</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Bus Modal -->
+<div class="modal fade" id="editBusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Bus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editBusForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_bus_number" class="form-label">Bus Number</label>
+                        <input type="text" class="form-control" name="bus_number" id="edit_bus_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_driver_name" class="form-label">Driver Name</label>
+                        <input type="text" class="form-control" name="driver_name" id="edit_driver_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_driver_phone" class="form-label">Driver Phone</label>
+                        <input type="tel" class="form-control" name="driver_phone" id="edit_driver_phone" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Bus</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

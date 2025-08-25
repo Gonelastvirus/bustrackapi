@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Bus Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-user-graduate me-2"></i>Welcome, {{ student.name }}</h2>
+    <button type="button" class="btn btn-outline-primary" onclick="refreshData()">
+        <i class="fas fa-sync-alt me-2"></i>Refresh
+    </button>
+</div>
+
+<div class="row g-4">
+    <!-- Bus Information -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-bus me-2 text-primary"></i>Your Bus
+                </h5>
+                
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Bus Number:</strong><br>
+                        <span class="h5 text-primary">{{ bus.bus_number }}</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Driver:</strong><br>
+                        {{ bus.driver_name }}<br>
+                        <small class="text-muted">{{ bus.driver_phone }}</small>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-2">
+                    <strong>Your Pickup Station:</strong><br>
+                    <i class="fas fa-map-marker-alt text-success me-1"></i>
+                    {{ pickup_station.station_name }}
+                </div>
+                
+                {% if latest_location %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-satellite-dish me-2"></i>
+                        <strong>Bus Location:</strong> Last updated {{ latest_location.timestamp.strftime('%H:%M:%S') }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Bus location not available
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Route Progress -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-route me-2 text-info"></i>Route Progress
+                </h5>
+                
+                {% if station_info %}
+                    <div class="route-progress">
+                        {% for info in station_info %}
+                            <div class="station-item d-flex align-items-center mb-3 p-2 rounded 
+                                        {% if info.status == 'passed' %}bg-success bg-opacity-10{% elif info.status == 'approaching' %}bg-warning bg-opacity-10{% else %}bg-secondary bg-opacity-10{% endif %}">
+                                <div class="station-icon me-3">
+                                    {% if info.status == 'passed' %}
+                                        <i class="fas fa-check-circle text-success fa-lg"></i>
+                                    {% elif info.status == 'approaching' %}
+                                        <i class="fas fa-bus text-warning fa-lg"></i>
+                                    {% else %}
+                                        <i class="far fa-circle text-secondary fa-lg"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="station-info flex-grow-1">
+                                    <div class="fw-bold">{{ info.station.station_name }}</div>
+                                    <small class="text-muted">
+                                        {% if info.status == 'passed' %}
+                                            Bus has passed
+                                        {% elif info.status == 'approaching' %}
+                                            Bus is approaching
+                                        {% else %}
+                                            ETA: {{ info.eta }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% if info.station.station_id == student.station_id %}
+                                    <span class="badge bg-primary">Your Station</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No route information available</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Updates -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-clock me-2 text-warning"></i>Real-time Updates
+                </h5>
+                
+                <div id="realtime-updates" class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Monitoring bus location... Page refreshes automatically every 30 seconds.
+                </div>
+                
+                {% if latest_location %}
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-map-pin text-primary fa-2x mb-2"></i>
+                                <div class="small text-muted">Current Location</div>
+                                <div class="fw-bold">{{ "%.6f"|format(latest_location.latitude) }}, {{ "%.6f"|format(latest_location.longitude) }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-clock text-success fa-2x mb-2"></i>
+                                <div class="small text-muted">Last Update</div>
+                                <div class="fw-bold">{{ latest_location.timestamp.strftime('%H:%M:%S') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-route text-info fa-2x mb-2"></i>
+                                <div class="small text-muted">Total Stations</div>
+                                <div class="fw-bold">{{ station_info|length }} stations</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

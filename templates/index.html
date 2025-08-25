@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-4">
+                <i class="fas fa-bus text-primary me-3"></i>
+                School Bus Tracker
+            </h1>
+            <p class="lead">Track your school bus in real-time and manage transportation efficiently</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Students</h5>
+                        <p class="card-text">Track your assigned bus location and get real-time updates on arrival times</p>
+                        <a href="{{ url_for('student_login') }}" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt me-2"></i>Student Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-cog fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Administration</h5>
+                        <p class="card-text">Manage buses, routes, stations, and student assignments</p>
+                        <a href="{{ url_for('admin_login') }}" class="btn btn-success">
+                            <i class="fas fa-sign-in-alt me-2"></i>Admin Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            Features
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Real-time GPS tracking</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Student dashboard</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Route management</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Bus fleet management</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Station tracking</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>ETA calculations</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

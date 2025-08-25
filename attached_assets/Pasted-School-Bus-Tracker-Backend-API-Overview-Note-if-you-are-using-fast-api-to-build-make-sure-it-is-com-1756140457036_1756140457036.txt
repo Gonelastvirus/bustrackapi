@@ -1,0 +1,89 @@
+School Bus Tracker Backend API Overview
+Note: if you are using fast api to build make sure it is compatible coz last time pydentic version>2 make issue on hosting.
+And if you gonna use fast api i at least need gui of this with each function below listed so that i manage stuff easily. Note there should be also page to change default admin login password. and there should be proper admin login page and logout in gui i said above.
+
+    Core Concepts / Data Models a) Bus
+
+bus_id (PK)
+
+bus_number
+
+driver_name
+
+driver_phone
+
+b) Station
+
+station_id (PK)
+
+station_name
+
+latitude, longitude
+
+bus_id (FK → Bus)
+
+order (int → sequence of stations on route)
+
+c) Student
+
+student_id (PK)
+
+username / password (hashed)
+
+name
+
+station_id (FK → pickup station)
+
+bus_id (FK → assigned bus)
+
+d) BusLocation
+
+bus_location_id (PK)
+
+bus_id (FK)
+
+latitude, longitude
+
+timestamp
+
+    API Endpoints A. Authentication Endpoint Method Description /admin/login POST Admin login → returns JWT /student/login POST Student login → returns JWT
+
+B. Admin Functions
+Endpoint	Method	Description
+/bus	POST	Add bus (bus number, driver info)
+/bus/{bus_id}	GET / PUT / DELETE	Get / update / delete bus
+/station	POST	Add station (station name, lat/lng, bus_id, order)
+/station/{station_id}	GET / PUT / DELETE	Manage station
+/student	POST	Add student and assign bus + station
+/student/{student_id}	GET / PUT / DELETE	Manage student
+
+C. Bus GPS Updates
+Endpoint	Method	Description
+/bus/{bus_id}/location	POST	Bus sends its current GPS location (lat/lng + timestamp)
+
+D. Student Functions
+Endpoint	Method	Description
+/student/my-bus	GET	Returns assigned bus info, driver info, current bus location
+/student/my-bus/stations	GET	Returns ordered list of stations for the bus with status (passed/approaching) and ETA to final destination
+
+    Backend Logic Highlights
+
+Receive GPS updates from Arduino → store in BusLocation.
+
+Calculate bus status for students:
+
+Determine passed / approaching / yet-to-come stations
+
+Calculate ETA to final station
+
+Provide APIs for student app to fetch:
+
+Current bus location
+
+Station table with status and ETA and Real-time updates in table like flag moving smoothly to next station which make visually looks like bus is moving towards next station.
+Arduino reads GPS coordinates (lat/lng).
+
+Arduino sends HTTP POST request to backend:
+POST https://your-backend-domain.com/bus/1/location
+Backend receives it → stores in BusLocation table → updates current location.
+Student app fetches this location via /student/my-bus and /student/my-bus/stations endpoints.
