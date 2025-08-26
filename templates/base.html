@@ -16,21 +16,88 @@
                 Bus Tracker
             </a>
             
-            <div class="navbar-nav ms-auto">
-                {% if session.admin_id %}
-                    <span class="navbar-text me-3">Welcome, {{ session.admin_username }}</span>
-                    <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-sign-out-alt me-1"></i>Logout
-                    </a>
-                {% elif session.student_id %}
-                    <span class="navbar-text me-3">Welcome, {{ session.student_name }}</span>
-                    <a href="{{ url_for('student_logout') }}" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-sign-out-alt me-1"></i>Logout
-                    </a>
-                {% else %}
-                    <a href="{{ url_for('admin_login') }}" class="btn btn-outline-light btn-sm me-2">Admin</a>
-                    <a href="{{ url_for('student_login') }}" class="btn btn-outline-light btn-sm">Student</a>
-                {% endif %}
+            <!-- Mobile toggle button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    {% if session.admin_id %}
+                        <!-- Admin Navigation -->
+                        <div class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-shield me-2"></i>
+                                <span class="d-none d-md-inline">{{ session.admin_username }}</span>
+                                <span class="d-md-none">Admin</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">Welcome, {{ session.admin_username }}</h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('manage_buses') }}">
+                                    <i class="fas fa-bus me-2"></i>Manage Buses
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('manage_stations') }}">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Manage Stations
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('manage_students') }}">
+                                    <i class="fas fa-user-graduate me-2"></i>Manage Students
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('manage_notices') }}">
+                                    <i class="fas fa-bullhorn me-2"></i>Manage Notices
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_map') }}">
+                                    <i class="fas fa-map-marked-alt me-2"></i>Fleet Map
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}">
+                                    <i class="fas fa-cog me-2"></i>Settings
+                                </a></li>
+                                <li><a class="dropdown-item text-danger" href="{{ url_for('admin_logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </a></li>
+                            </ul>
+                        </div>
+                    {% elif session.student_id %}
+                        <!-- Student Navigation -->
+                        <div class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-graduate me-2"></i>
+                                <span class="d-none d-md-inline">{{ session.student_name }}</span>
+                                <span class="d-md-none">Student</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">Welcome, {{ session.student_name }}</h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('student_dashboard') }}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('student_map') }}">
+                                    <i class="fas fa-map-marked-alt me-2"></i>Live Map
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{{ url_for('student_logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </a></li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <!-- Login Options -->
+                        <div class="d-flex flex-column flex-lg-row gap-2 align-items-stretch align-items-lg-center">
+                            <a href="{{ url_for('admin_login') }}" class="btn btn-outline-success btn-sm d-flex align-items-center justify-content-center">
+                                <i class="fas fa-user-shield me-2"></i>
+                                <span>Admin Login</span>
+                            </a>
+                            <a href="{{ url_for('student_login') }}" class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center">
+                                <i class="fas fa-user-graduate me-2"></i>
+                                <span>Student Login</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </nav>

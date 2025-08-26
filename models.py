@@ -69,3 +69,18 @@ class BusLocation(db.Model):
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Notice(db.Model):
+    __tablename__ = 'notices'
+    
+    notice_id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    notice_type = db.Column(db.String(50), default='general')  # general, delay, emergency
+    is_active = db.Column(db.Boolean, default=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('admins.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=True)  # Optional expiration date
+    
+    # Relationship with admin
+    admin = db.relationship('Admin', backref=db.backref('notices', lazy=True))

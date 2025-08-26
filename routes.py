@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from app import app, db
-from models import Admin, Bus, Station, Student, BusLocation
+from models import Admin, Bus, Station, Student, BusLocation, Notice
 from auth import admin_required, student_required, logout_admin, logout_student
 from utils import calculate_eta, get_station_status
 from datetime import datetime
@@ -39,11 +39,13 @@ def admin_dashboard():
     bus_count = Bus.query.count()
     station_count = Station.query.count()
     student_count = Student.query.count()
+    notice_count = Notice.query.filter_by(is_active=True).count()
     
     return render_template('admin/dashboard.html', 
                          bus_count=bus_count, 
                          station_count=station_count,
-                         student_count=student_count)
+                         student_count=student_count,
+                         notice_count=notice_count)
 
 @app.route('/admin/buses')
 @admin_required
@@ -286,12 +288,20 @@ def student_dashboard():
             'eta': eta
         })
     
+    # Get active notices
+    now = datetime.utcnow()
+    notices = Notice.query.filter(
+        Notice.is_active == True,
+        db.or_(Notice.expires_at.is_(None), Notice.expires_at > now)
+    ).order_by(Notice.created_at.desc()).all()
+    
     return render_template('student/dashboard.html', 
                          student=student,
                          bus=bus,
                          pickup_station=pickup_station,
                          latest_location=latest_location,
-                         station_info=station_info)
+                         station_info=station_info,
+                         notices=notices)
 
 # API Routes for GPS Updates
 @app.route('/bus/<int:bus_id>/location', methods=['POST'])
@@ -373,3 +383,77 @@ def get_stations_by_bus(bus_id):
     stations = Station.query.filter_by(bus_id=bus_id).order_by(Station.order).all()
     station_list = [{'station_id': s.station_id, 'station_name': s.station_name} for s in stations]
     return jsonify(station_list)
+
+# Notice Management Routes
+@app.route('/admin/notices')
+@admin_required
+def manage_notices():
+    notices = Notice.query.order_by(Notice.created_at.desc()).all()
+    return render_template('admin/manage_notices.html', notices=notices)
+
+@app.route('/admin/notices/add', methods=['POST'])
+@admin_required
+def add_notice():
+    title = request.form['title']
+    message = request.form['message']
+    notice_type = request.form['notice_type']
+    expires_at_str = request.form.get('expires_at')
+    
+    # Parse expiration date if provided
+    expires_at = None
+    if expires_at_str:
+        try:
+            expires_at = datetime.strptime(expires_at_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            flash('Invalid expiration date format', 'error')
+            return redirect(url_for('manage_notices'))
+    
+    notice = Notice()
+    notice.title = title
+    notice.message = message
+    notice.notice_type = notice_type
+    notice.created_by = session['admin_id']
+    notice.expires_at = expires_at
+    
+    db.session.add(notice)
+    db.session.commit()
+    flash('Notice added successfully', 'success')
+    return redirect(url_for('manage_notices'))
+
+@app.route('/admin/notices/<int:notice_id>/toggle', methods=['POST'])
+@admin_required
+def toggle_notice(notice_id):
+    notice = Notice.query.get_or_404(notice_id)
+    notice.is_active = not notice.is_active
+    db.session.commit()
+    
+    status = "activated" if notice.is_active else "deactivated"
+    flash(f'Notice {status} successfully', 'success')
+    return redirect(url_for('manage_notices'))
+
+@app.route('/admin/notices/<int:notice_id>/delete', methods=['POST'])
+@admin_required
+def delete_notice(notice_id):
+    notice = Notice.query.get_or_404(notice_id)
+    db.session.delete(notice)
+    db.session.commit()
+    flash('Notice deleted successfully', 'success')
+    return redirect(url_for('manage_notices'))
+
+# Map View Routes
+@app.route('/student/map')
+@student_required
+def student_map():
+    student = Student.query.get(session['student_id'])
+    bus = Bus.query.get(student.bus_id)
+    pickup_station = Station.query.get(student.station_id)
+    return render_template('student/map.html', 
+                         student=student, 
+                         bus=bus, 
+                         pickup_station=pickup_station)
+
+@app.route('/admin/map')
+@admin_required
+def admin_map():
+    buses = Bus.query.all()
+    return render_template('admin/map.html', buses=buses)

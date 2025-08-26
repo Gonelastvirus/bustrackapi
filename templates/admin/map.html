@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Bus Fleet Map - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-map-marked-alt me-2"></i>Live Fleet Tracking</h2>
+        <p class="text-muted mb-0">Real-time locations of all buses</p>
+    </div>
+    <div>
+        <button type="button" class="btn btn-outline-primary me-2" id="fitAllBuses">
+            <i class="fas fa-expand-arrows-alt me-2"></i>View All Buses
+        </button>
+        <button type="button" class="btn btn-outline-success" id="toggleAutoRefresh">
+            <i class="fas fa-sync-alt me-2"></i>Auto Refresh: <span id="refreshStatus">On</span>
+        </button>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-satellite-dish me-2"></i>Fleet Overview
+                        <span class="badge bg-success ms-2" id="connectionStatus">Connected</span>
+                    </h5>
+                    <div>
+                        <span class="badge bg-primary me-2">Active Buses: <span id="activeBusCount">0</span></span>
+                        <small class="text-muted">Last update: <span id="lastUpdate">-</span></small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="map" style="height: 600px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Bus Status Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="busStatusList" class="row">
+                    <div class="col-12 text-center">
+                        <i class="fas fa-spinner fa-spin"></i> Loading bus information...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+class AdminFleetTracker {
+    constructor() {
+        this.map = null;
+        this.busMarkers = {};
+        this.updateInterval = null;
+        this.autoRefresh = true;
+        this.UPDATE_INTERVAL = 10000; // 10 seconds for admin view
+        this.busHistory = {};
+        
+        this.init();
+    }
+    
+    init() {
+        this.initMap();
+        this.startRealTimeUpdates();
+        this.setupEventListeners();
+    }
+    
+    initMap() {
+        // Initialize map with a broader view
+        this.map = L.map('map').setView([40.7128, -74.0060], 12);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(this.map);
+        
+        // Add map controls
+        this.map.zoomControl.setPosition('topright');
+    }
+    
+    async updateAllBuses() {
+        try {
+            const response = await fetch('/api/map/admin/all-buses');
+            if (response.ok) {
+                const buses = await response.json();
+                this.displayBuses(buses);
+                this.updateBusStatusList(buses);
+                this.updateConnectionStatus(true);
+                this.updateLastUpdateTime();
+                document.getElementById('activeBusCount').textContent = buses.length;
+            } else {
+                throw new Error('Failed to fetch bus locations');
+            }
+        } catch (error) {
+            console.error('Error updating buses:', error);
+            this.updateConnectionStatus(false);
+        }
+    }
+    
+    displayBuses(buses) {
+        // Clear existing markers not in current data
+        Object.keys(this.busMarkers).forEach(busId => {
+            if (!buses.find(bus => bus.bus_id.toString() === busId)) {
+                this.map.removeLayer(this.busMarkers[busId]);
+                delete this.busMarkers[busId];
+            }
+        });
+        
+        buses.forEach(bus => {
+            const { bus_id, bus_number, latitude, longitude, driver_name, timestamp } = bus;
+            
+            // Store history for speed calculation
+            if (this.busHistory[bus_id]) {
+                this.busHistory[bus_id].previous = this.busHistory[bus_id].current;
+            } else {
+                this.busHistory[bus_id] = {};
+            }
+            this.busHistory[bus_id].current = { latitude, longitude, timestamp };
+            
+            // Calculate time since last update
+            const updateTime = new Date(timestamp);
+            const now = new Date();
+            const minutesAgo = Math.floor((now - updateTime) / 60000);
+            const isStale = minutesAgo > 10;
+            
+            // Create or update bus marker
+            if (this.busMarkers[bus_id]) {
+                this.busMarkers[bus_id].setLatLng([latitude, longitude]);
+            } else {
+                const busIcon = L.divIcon({
+                    html: `<div style="background-color: ${isStale ? '#6c757d' : '#dc3545'}; color: white; border-radius: 8px; padding: 4px 8px; font-weight: bold; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); min-width: 60px; text-align: center;"><i class="fas fa-bus"></i><br>${bus_number}</div>`,
+                    className: 'custom-admin-bus-marker',
+                    iconSize: [70, 40]
+                });
+                
+                this.busMarkers[bus_id] = L.marker([latitude, longitude], { icon: busIcon })
+                    .addTo(this.map);
+            }
+            
+            // Calculate speed if we have history
+            let speed = 0;
+            if (this.busHistory[bus_id].previous) {
+                speed = this.calculateSpeed(
+                    this.busHistory[bus_id].previous,
+                    this.busHistory[bus_id].current
+                );
+            }
+            
+            // Update popup
+            const popupContent = `
+                <div class="bus-popup">
+                    <strong>Bus ${bus_number}</strong><br>
+                    <i class="fas fa-user me-1"></i>Driver: ${driver_name}<br>
+                    <i class="fas fa-clock me-1"></i>Updated: ${minutesAgo === 0 ? 'Just now' : minutesAgo + 'm ago'}<br>
+                    <i class="fas fa-tachometer-alt me-1"></i>Speed: ${speed.toFixed(1)} km/h<br>
+                    <i class="fas fa-map-pin me-1"></i>Lat: ${latitude.toFixed(6)}, Lon: ${longitude.toFixed(6)}<br>
+                    <hr class="my-2">
+                    <button class="btn btn-sm btn-primary" onclick="centerOnBus(${bus_id})">Center on Map</button>
+                </div>
+            `;
+            this.busMarkers[bus_id].bindPopup(popupContent);
+            
+            // Update marker color based on freshness
+            const icon = this.busMarkers[bus_id].getIcon();
+            const newIconHtml = icon.options.html.replace(
+                /background-color: [^;]+;/,
+                `background-color: ${isStale ? '#6c757d' : '#dc3545'};`
+            );
+            icon.options.html = newIconHtml;
+        });
+    }
+    
+    updateBusStatusList(buses) {
+        let statusHTML = '';
+        
+        buses.forEach(bus => {
+            const updateTime = new Date(bus.timestamp);
+            const now = new Date();
+            const minutesAgo = Math.floor((now - updateTime) / 60000);
+            const isStale = minutesAgo > 10;
+            
+            // Calculate speed
+            let speed = 0;
+            if (this.busHistory[bus.bus_id] && this.busHistory[bus.bus_id].previous) {
+                speed = this.calculateSpeed(
+                    this.busHistory[bus.bus_id].previous,
+                    this.busHistory[bus.bus_id].current
+                );
+            }
+            
+            statusHTML += `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100 ${isStale ? 'border-secondary' : 'border-primary'}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">
+                                    <i class="fas fa-bus me-2 ${isStale ? 'text-secondary' : 'text-primary'}"></i>
+                                    Bus ${bus.bus_number}
+                                </h6>
+                                <span class="badge ${isStale ? 'bg-secondary' : 'bg-success'}">${isStale ? 'Stale' : 'Active'}</span>
+                            </div>
+                            <div class="small text-muted mb-2">
+                                <i class="fas fa-user me-1"></i>${bus.driver_name}
+                            </div>
+                            <div class="row small">
+                                <div class="col-6">
+                                    <strong>Speed:</strong><br>
+                                    ${speed.toFixed(1)} km/h
+                                </div>
+                                <div class="col-6">
+                                    <strong>Last Seen:</strong><br>
+                                    ${minutesAgo === 0 ? 'Just now' : minutesAgo + 'm ago'}
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary w-100 mt-2" onclick="centerOnBus(${bus.bus_id})">
+                                <i class="fas fa-crosshairs me-1"></i>Locate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.getElementById('busStatusList').innerHTML = statusHTML;
+    }
+    
+    calculateSpeed(prevPos, currPos) {
+        const prevTime = new Date(prevPos.timestamp);
+        const currTime = new Date(currPos.timestamp);
+        const timeDiff = (currTime - prevTime) / 1000 / 3600; // hours
+        
+        if (timeDiff === 0) return 0;
+        
+        const distance = this.getDistance(
+            prevPos.latitude, prevPos.longitude,
+            currPos.latitude, currPos.longitude
+        );
+        
+        return Math.min(distance / timeDiff, 200); // Cap at 200 km/h for realistic speeds
+    }
+    
+    getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+    
+    updateConnectionStatus(connected) {
+        const statusElement = document.getElementById('connectionStatus');
+        if (connected) {
+            statusElement.className = 'badge bg-success ms-2';
+            statusElement.textContent = 'Connected';
+        } else {
+            statusElement.className = 'badge bg-danger ms-2';
+            statusElement.textContent = 'Disconnected';
+        }
+    }
+    
+    updateLastUpdateTime() {
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+    }
+    
+    fitAllBuses() {
+        const markers = Object.values(this.busMarkers);
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            this.map.fitBounds(group.getBounds().pad(0.1));
+        }
+    }
+    
+    centerOnBus(busId) {
+        const marker = this.busMarkers[busId];
+        if (marker) {
+            this.map.setView(marker.getLatLng(), 15);
+            marker.openPopup();
+        }
+    }
+    
+    toggleAutoRefresh() {
+        this.autoRefresh = !this.autoRefresh;
+        const refreshStatus = document.getElementById('refreshStatus');
+        const toggleButton = document.getElementById('toggleAutoRefresh');
+        
+        if (this.autoRefresh) {
+            refreshStatus.textContent = 'On';
+            toggleButton.className = 'btn btn-outline-success';
+            this.startRealTimeUpdates();
+        } else {
+            refreshStatus.textContent = 'Off';
+            toggleButton.className = 'btn btn-outline-secondary';
+            if (this.updateInterval) {
+                clearInterval(this.updateInterval);
+                this.updateInterval = null;
+            }
+        }
+    }
+    
+    startRealTimeUpdates() {
+        if (!this.autoRefresh) return;
+        
+        // Initial load
+        this.updateAllBuses();
+        
+        // Clear existing interval
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
+        
+        // Set up interval for real-time updates
+        this.updateInterval = setInterval(() => {
+            if (this.autoRefresh) {
+                this.updateAllBuses();
+            }
+        }, this.UPDATE_INTERVAL);
+    }
+    
+    setupEventListeners() {
+        document.getElementById('fitAllBuses').addEventListener('click', () => {
+            this.fitAllBuses();
+        });
+        
+        document.getElementById('toggleAutoRefresh').addEventListener('click', () => {
+            this.toggleAutoRefresh();
+        });
+        
+        // Handle visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                    this.updateInterval = null;
+                }
+            } else {
+                if (this.autoRefresh && !this.updateInterval) {
+                    this.startRealTimeUpdates();
+                }
+            }
+        });
+    }
+    
+    destroy() {
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
+    }
+}
+
+// Global function for bus center button
+function centerOnBus(busId) {
+    if (window.fleetTracker) {
+        window.fleetTracker.centerOnBus(busId);
+    }
+}
+
+// Initialize the fleet tracker when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.fleetTracker = new AdminFleetTracker();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (window.fleetTracker) {
+        window.fleetTracker.destroy();
+    }
+});
+</script>
+{% endblock %}
