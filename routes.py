@@ -7,7 +7,7 @@ from datetime import datetime
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template("index.html",session=session)
 
 # Admin Routes
 @app.route('/admin/login', methods=['GET', 'POST'])

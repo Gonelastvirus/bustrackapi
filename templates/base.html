@@ -17,6 +17,7 @@
             </a>
             
             <!-- Mobile toggle button -->
+            <!-- hide toggle in landing page -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -26,13 +27,13 @@
                     {% if session.admin_id %}
                         <!-- Admin Navigation -->
                         <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-shield me-2"></i>
-                                <span class="d-none d-md-inline">{{ session.admin_username }}</span>
-                                <span class="d-md-none">Admin</span>
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin
+                               <i class="fas fa-user-shield me-2"></i> 
+                             <span class="d-none d-md-inline">{{ session.admin_username }}</span> 
+                               <span class="d-md-none">Admin</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><h6 class="dropdown-header">Welcome, {{ session.admin_username }}</h6></li>
+                       <li><h6 class="dropdown-header">Welcome, {{ session.admin_username }}</h6></li> 
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
                                     <i class="fas fa-tachometer-alt me-2"></i>Dashboard
@@ -65,12 +66,12 @@
                         <!-- Student Navigation -->
                         <div class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-graduate me-2"></i>
-                                <span class="d-none d-md-inline">{{ session.student_name }}</span>
-                                <span class="d-md-none">Student</span>
+                         <!--       <i class="fas fa-user-graduate me-2"></i> -->
+                     <!--       <span class="d-none d-md-inline">{{ session.student_name }}</span> -->
+                               <!-- <span class="d-md-none">Student</span> -->
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><h6 class="dropdown-header">Welcome, {{ session.student_name }}</h6></li>
+                               <li><h6 class="dropdown-header">Welcome, {{ session.student_name }}</h6></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{{ url_for('student_dashboard') }}">
                                     <i class="fas fa-tachometer-alt me-2"></i>Dashboard
@@ -85,7 +86,7 @@
                             </ul>
                         </div>
                     {% else %}
-                        <!-- Login Options -->
+                        <!-- Login Options 
                         <div class="d-flex flex-column flex-lg-row gap-2 align-items-stretch align-items-lg-center">
                             <a href="{{ url_for('admin_login') }}" class="btn btn-outline-success btn-sm d-flex align-items-center justify-content-center">
                                 <i class="fas fa-user-shield me-2"></i>
@@ -95,8 +96,9 @@
                                 <i class="fas fa-user-graduate me-2"></i>
                                 <span>Student Login</span>
                             </a>
-                        </div>
+                        </div> -->
                     {% endif %}
+                     
                 </div>
             </div>
         </div>
