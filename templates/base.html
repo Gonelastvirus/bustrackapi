@@ -27,7 +27,7 @@
                     {% if session.admin_id %}
                         <!-- Admin Navigation -->
                         <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                <i class="fas fa-user-shield me-2"></i> 
                              <span class="d-none d-md-inline">{{ session.admin_username }}</span> 
                                <span class="d-md-none">Admin</span>
@@ -66,9 +66,9 @@
                         <!-- Student Navigation -->
                         <div class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                         <!--       <i class="fas fa-user-graduate me-2"></i> -->
-                     <!--       <span class="d-none d-md-inline">{{ session.student_name }}</span> -->
-                               <!-- <span class="d-md-none">Student</span> -->
+                              <i class="fas fa-user-graduate me-2"></i> 
+                           <span class="d-none d-md-inline">{{ session.student_name }}</span> 
+                                <span class="d-md-none">Student</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                <li><h6 class="dropdown-header">Welcome, {{ session.student_name }}</h6></li>
